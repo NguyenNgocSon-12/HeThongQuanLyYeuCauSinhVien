@@ -1,73 +1,96 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; // Thêm thư viện này
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/user_model.dart';
+import '../utils/session_manager.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance; // Khởi tạo Firestore
-  
-  // Đuôi email cố định theo trường HUIT của bạn
-  final String _schoolDomain = "@huit.edu.vn";
+  AuthService({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _db = firestore ?? FirebaseFirestore.instance;
 
-  // 1. Logic ĐĂNG KÝ bằng MSSV + Lưu thông tin cá nhân vào Firestore
+  static const _schoolDomain = '@huit.edu.vn';
+
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _db;
+
   Future<User?> registerWithMSSV({
-    required String mssv, 
+    required String mssv,
     required String password,
-    required String fullName, // Thêm Họ tên sinh viên
-    required String className, // Thêm Lớp (Ví dụ: 12DHTh01)
+    required String fullName,
+    required String className,
   }) async {
+    final normalizedMssv = mssv.trim().toUpperCase();
+    final normalizedName = fullName.trim();
+    final normalizedClass = className.trim().toUpperCase();
+
+    if (normalizedMssv.length < 6 || normalizedMssv.length > 20) {
+      throw ArgumentError('MSSV phải có từ 6 đến 20 ký tự.');
+    }
+    if (normalizedName.isEmpty) {
+      throw ArgumentError('Họ tên không được để trống.');
+    }
+
+    final email = '${normalizedMssv.toLowerCase()}$_schoolDomain';
+    User? createdUser;
+
     try {
-      String emailFromMSSV = mssv.trim().toLowerCase() + _schoolDomain;
+      final result = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      createdUser = result.user;
 
-      // Tạo tài khoản trên Firebase Authentication
-      UserCredential result = await _auth.createUserWithEmailAndPassword(
-          email: emailFromMSSV, password: password);
-      
-      User? user = result.user;
+      if (createdUser != null) {
+        final profile = UserModel(
+          uid: createdUser.uid,
+          mssv: normalizedMssv,
+          fullName: normalizedName,
+          email: email,
+          className: normalizedClass,
+        );
 
-      // Nếu tạo Auth thành công, tiến hành lưu profile sinh viên vào Firestore collection 'users'
-      if (user != null) {
-        await _db.collection('users').doc(user.uid).set({
-          'uid': user.uid,
-          'mssv': mssv.trim().toUpperCase(),
-          'fullName': fullName.trim(),
-          'className': className.trim().toUpperCase(),
-          'role': 'student', // Mặc định là sinh viên
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        await _db
+            .collection('users')
+            .doc(createdUser.uid)
+            .set(profile.toFirestore());
       }
-      return user;
-    } catch (e) {
-      print("Lỗi đăng ký: ${e.toString()}");
+
+      return createdUser;
+    } catch (_) {
+      // Tránh tài khoản Auth bị thiếu hồ sơ nếu bước ghi Firestore thất bại.
+      try {
+        await createdUser?.delete();
+      } catch (_) {
+        // Giữ lại lỗi gốc để giao diện báo đúng nguyên nhân đăng ký thất bại.
+      }
       rethrow;
     }
   }
 
-  // 2. Logic ĐĂNG NHẬP bằng MSSV + Lưu Session (SharedPreferences)
   Future<User?> loginWithMSSV(String mssv, String password) async {
-    try {
-      String emailFromMSSV = mssv.trim().toLowerCase() + _schoolDomain;
+    final normalizedMssv = mssv.trim().toUpperCase();
+    final email = '${normalizedMssv.toLowerCase()}$_schoolDomain';
+    final result = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
 
-      UserCredential result = await _auth.signInWithEmailAndPassword(
-          email: emailFromMSSV, password: password);
-      
-      if (result.user != null) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isLoggedIn', true);
-        await prefs.setString('studentMssv', mssv.trim().toUpperCase());
-        await prefs.setString('uid', result.user!.uid); // Nên lưu thêm UID để dễ truy vấn sau này
-      }
-      return result.user;
-    } catch (e) {
-      print("Lỗi đăng nhập: ${e.toString()}");
-      rethrow;
+    if (result.user != null) {
+      await SessionManager.setLoggedIn(normalizedMssv, uid: result.user!.uid);
     }
+    return result.user;
   }
 
-  // 3. Logic ĐĂNG XUẤT + Xóa Session
+  Future<UserModel?> getUserProfile(String uid) async {
+    final snapshot = await _db.collection('users').doc(uid).get();
+    final data = snapshot.data();
+    if (!snapshot.exists || data == null) return null;
+    return UserModel.fromMap(snapshot.id, data);
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); 
+    await SessionManager.logout();
   }
 }

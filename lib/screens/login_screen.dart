@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Cần thiết để đọc phân quyền role
 import 'package:firebase_auth/firebase_auth.dart';
+
+import '../models/user_model.dart';
 import 'student_home.dart';
 import 'admin_home.dart';
 import 'register_screen.dart';
 import '../services/auth_service.dart';
-import '../utils/session_manager.dart'; // Quản lý session đăng nhập
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -16,7 +17,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController mssvController = TextEditingController();
   final TextEditingController passController = TextEditingController();
-  final AuthService _authService = AuthService(); // Khởi tạo instance của AuthService
+  final AuthService _authService =
+      AuthService(); // Khởi tạo instance của AuthService
 
   bool _isLoading = false; // Quản lý trạng thái hiển thị loading vòng xoay
 
@@ -46,18 +48,14 @@ class _LoginScreenState extends State<LoginScreen> {
       User? user = await _authService.loginWithMSSV(mssv, pass);
 
       if (user != null) {
-        // 2. Đọc thông tin 'role' (Vai trò) của tài khoản này từ Firestore
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
+        // 2. Đọc hồ sơ và role qua AuthService.
+        final profile = await _authService.getUserProfile(user.uid);
 
-        if (userDoc.exists && userDoc.data() != null) {
-          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-          String role = userData['role'] ?? 'student'; // Mặc định là student nếu trống
-          await SessionManager.setLoggedIn(mssv);
+        if (!mounted) return;
+
+        if (profile != null) {
           // 3. Phân quyền điều hướng màn hình dựa trên role cụ thể
-          if (role == "admin") {
+          if (profile.role == UserRole.admin) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const AdminHome()),
@@ -76,22 +74,27 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
+
       // 4. Xử lý hiển thị thông báo lỗi chi tiết từ Firebase một cách trực quan
       String errorMsg = "Sai MSSV hoặc mật khẩu. Vui lòng kiểm tra lại!";
       String errString = e.toString().toLowerCase();
 
-      if (errString.contains('user-not-found') || errString.contains('invalid-credential')) {
+      if (errString.contains('user-not-found') ||
+          errString.contains('invalid-credential')) {
         errorMsg = "Thông tin đăng nhập không chính xác hoặc chưa đăng ký!";
       } else if (errString.contains('network-request-failed')) {
         errorMsg = "Lỗi kết nối Internet. Vui lòng thử lại!";
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMsg)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMsg)));
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false); // Tắt hiệu ứng loading khi hoàn thành công việc
+        setState(
+          () => _isLoading = false,
+        ); // Tắt hiệu ứng loading khi hoàn thành công việc
       }
     }
   }
@@ -124,7 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 10),
                     const Text(
                       "Hệ thống hỗ trợ Sinh viên",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 20),
 
@@ -162,35 +168,42 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 50,
                       child: ElevatedButton(
                         // Nếu đang chạy ngầm thì hiển thị vòng xoay, ngược lại hiện chữ Đăng nhập
-                        onPressed: _isLoading ? null : handleLogin, 
+                        onPressed: _isLoading ? null : handleLogin,
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: _isLoading 
+                        child: _isLoading
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
-                            : const Text("Đăng nhập", style: TextStyle(fontSize: 16)),
+                            : const Text(
+                                "Đăng nhập",
+                                style: TextStyle(fontSize: 16),
+                              ),
                       ),
                     ),
 
                     const SizedBox(height: 10),
 
                     TextButton(
-                      onPressed: _isLoading 
-                          ? null 
+                      onPressed: _isLoading
+                          ? null
                           : () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const RegisterScreen(),
+                                ),
                               );
                             },
                       child: const Text("Chưa có tài khoản? Đăng ký"),
-                    )
+                    ),
                   ],
                 ),
               ),

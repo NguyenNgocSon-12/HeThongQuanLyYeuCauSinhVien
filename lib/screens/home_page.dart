@@ -23,10 +23,7 @@ class HomePage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
 
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF1565C0),
-                    Color(0xFF42A5F5),
-                  ],
+                  colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
 
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -34,7 +31,7 @@ class HomePage extends StatelessWidget {
 
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.25),
+                    color: Colors.blue.withValues(alpha: 0.25),
 
                     blurRadius: 20,
 
@@ -64,8 +61,7 @@ class HomePage extends StatelessWidget {
 
                       Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
 
                           children: const [
                             Text(
@@ -94,9 +90,7 @@ class HomePage extends StatelessWidget {
                             Text(
                               "MSSV: 22110234",
 
-                              style: TextStyle(
-                                color: Colors.white70,
-                              ),
+                              style: TextStyle(color: Colors.white70),
                             ),
                           ],
                         ),
@@ -144,19 +138,13 @@ class HomePage extends StatelessWidget {
 
             /// ================= QUICK MENU =================
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
 
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                 children: [
-                  _quickMenu(
-                    Icons.history_rounded,
-                    "Tiến độ",
-                    Colors.orange,
-                  ),
+                  _quickMenu(Icons.history_rounded, "Tiến độ", Colors.orange),
 
                   _quickMenu(
                     Icons.analytics_rounded,
@@ -170,11 +158,7 @@ class HomePage extends StatelessWidget {
                     Colors.green,
                   ),
 
-                  _quickMenu(
-                    Icons.help_outline_rounded,
-                    "FAQ",
-                    Colors.red,
-                  ),
+                  _quickMenu(Icons.help_outline_rounded, "FAQ", Colors.red),
                 ],
               ),
             ),
@@ -183,21 +167,16 @@ class HomePage extends StatelessWidget {
 
             /// ================= TITLE =================
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
 
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
                 children: const [
                   Text(
                     "Yêu cầu gần đây",
 
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
 
                   Text(
@@ -257,28 +236,19 @@ class HomePage extends StatelessWidget {
   }
 
   /// ================= STAT CARD =================
-  Widget _buildStatCard(
-    String value,
-    String title,
-    IconData icon,
-  ) {
+  Widget _buildStatCard(String value, String title, IconData icon) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(vertical: 15),
 
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
 
         borderRadius: BorderRadius.circular(20),
       ),
 
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 22,
-          ),
+          Icon(icon, color: Colors.white, size: 22),
 
           const SizedBox(height: 8),
 
@@ -299,10 +269,7 @@ class HomePage extends StatelessWidget {
 
             textAlign: TextAlign.center,
 
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 11),
           ),
         ],
       ),
@@ -310,27 +277,19 @@ class HomePage extends StatelessWidget {
   }
 
   /// ================= QUICK MENU =================
-  Widget _quickMenu(
-    IconData icon,
-    String title,
-    Color color,
-  ) {
+  Widget _quickMenu(IconData icon, String title, Color color) {
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(16),
 
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
 
             shape: BoxShape.circle,
           ),
 
-          child: Icon(
-            icon,
-            color: color,
-            size: 28,
-          ),
+          child: Icon(icon, color: color, size: 28),
         ),
 
         const SizedBox(height: 8),
@@ -338,10 +297,7 @@ class HomePage extends StatelessWidget {
         Text(
           title,
 
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         ),
       ],
     );
@@ -356,10 +312,7 @@ class HomePage extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 8,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
 
       padding: const EdgeInsets.all(16),
 
@@ -370,7 +323,7 @@ class HomePage extends StatelessWidget {
 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
 
             blurRadius: 10,
           ),
@@ -383,23 +336,19 @@ class HomePage extends StatelessWidget {
             padding: const EdgeInsets.all(12),
 
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
 
               borderRadius: BorderRadius.circular(14),
             ),
 
-            child: Icon(
-              icon,
-              color: color,
-            ),
+            child: Icon(icon, color: color),
           ),
 
           const SizedBox(width: 15),
 
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
                 Text(
@@ -416,24 +365,17 @@ class HomePage extends StatelessWidget {
                 Text(
                   time,
 
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
                 ),
               ],
             ),
           ),
 
           Container(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
 
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
 
               borderRadius: BorderRadius.circular(30),
             ),

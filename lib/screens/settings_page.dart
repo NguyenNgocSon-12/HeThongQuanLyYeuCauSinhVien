@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // Sử dụng đường dẫn tương đối để tránh lỗi package không tồn tại
-import '../providers/theme_provider.dart'; 
+import '../providers/theme_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -35,7 +35,10 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 12),
           _buildCard(
             child: SwitchListTile(
-              secondary: const Icon(Icons.notifications_active, color: Colors.orange),
+              secondary: const Icon(
+                Icons.notifications_active,
+                color: Colors.orange,
+              ),
               title: const Text("Nhận thông báo"),
               subtitle: const Text("Cập nhật trạng thái yêu cầu"),
               value: notificationEnabled,
@@ -60,7 +63,7 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
           ),
-          
+
           // ... (Phần App Info giữ nguyên)
         ],
       ),
@@ -68,13 +71,20 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _sectionTitle(String title) {
-    return Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1565C0)));
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF1565C0),
+      ),
+    );
   }
 
   Widget _buildCard({required Widget child}) {
     return Card(
       elevation: 3,
-      shadowColor: Colors.black.withOpacity(0.08),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: child,
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,8 +13,10 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController mssvController = TextEditingController();
+  final TextEditingController classNameController = TextEditingController();
   final TextEditingController passController = TextEditingController();
   final TextEditingController confirmPassController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false; // Biến trạng thái hiển thị vòng xoay tải dữ liệu
@@ -22,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     nameController.dispose();
     mssvController.dispose();
+    classNameController.dispose();
     passController.dispose();
     confirmPassController.dispose();
     super.dispose();
@@ -32,48 +36,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final name = nameController.text.trim();
     final mssv = mssvController.text.trim();
+    final className = classNameController.text.trim();
     final pass = passController.text.trim();
-    
-    // Tạo email ảo tự động dựa trên MSSV đồng bộ với màn hình Đăng nhập
-    final email = "$mssv@huit.edu.vn"; 
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // BƯỚC 1: Tạo tài khoản trên hệ thống Firebase Authentication
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: pass);
+      await _authService.registerWithMSSV(
+        mssv: mssv,
+        password: pass,
+        fullName: name,
+        className: className,
+      );
+      await _authService.signOut();
 
-      final uid = userCredential.user?.uid;
+      if (!mounted) return;
 
-      if (uid != null) {
-        // BƯỚC 2: Đồng bộ thông tin chi tiết của Sinh viên lên Cloud Firestore
-        await FirebaseFirestore.instance.collection('users').doc(uid).set({
-          "uid": uid,
-          "name": name,
-          "mssv": mssv,
-          "email": email,
-          "role": "student", // Gán quyền tự động cho tài khoản đăng ký là sinh viên
-          "createdAt": FieldValue.serverTimestamp(),
-        });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Đăng ký tài khoản thành công!"),
+          backgroundColor: Colors.green,
+        ),
+      );
 
-        if (!mounted) return;
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Đăng ký tài khoản thành công!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Đăng ký xong, đưa sinh viên quay lại màn hình đăng nhập
-        Navigator.pop(context);
-      }
+      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Đăng ký thất bại!";
-      
+
       // Bắt các trường hợp lỗi Firebase phản hồi về
       if (e.code == 'email-already-in-use') {
         errorMsg = "Mã số sinh viên này đã được đăng ký tài khoản!";
@@ -82,12 +73,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else if (e.code == 'network-request-failed') {
         errorMsg = "Lỗi kết nối mạng đến Server Firebase!";
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMsg),
-          backgroundColor: Colors.redAccent,
-        ),
+        SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -133,14 +121,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.app_registration,
-                          size: 60, color: Colors.blue),
+                      const Icon(
+                        Icons.app_registration,
+                        size: 60,
+                        color: Colors.blue,
+                      ),
                       const SizedBox(height: 10),
 
                       const Text(
                         "Đăng ký tài khoản",
                         style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
 
                       const SizedBox(height: 20),
@@ -149,8 +142,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       TextFormField(
                         controller: nameController,
                         enabled: !_isLoading,
-                        validator: (value) =>
-                            value!.isEmpty ? "Không được để trống họ tên" : null,
+                        validator: (value) => value!.isEmpty
+                            ? "Không được để trống họ tên"
+                            : null,
                         decoration: InputDecoration(
                           labelText: "Họ tên",
                           prefixIcon: const Icon(Icons.person),
@@ -172,6 +166,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         decoration: InputDecoration(
                           labelText: "MSSV",
                           prefixIcon: const Icon(Icons.badge),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      /// FIELD LỚP
+                      TextFormField(
+                        controller: classNameController,
+                        enabled: !_isLoading,
+                        validator: (value) =>
+                            value!.isEmpty ? "Vui lòng nhập lớp" : null,
+                        decoration: InputDecoration(
+                          labelText: "Lớp",
+                          prefixIcon: const Icon(Icons.class_),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -263,7 +274,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ? null
                             : () => Navigator.pop(context),
                         child: const Text("Quay lại đăng nhập"),
-                      )
+                      ),
                     ],
                   ),
                 ),
