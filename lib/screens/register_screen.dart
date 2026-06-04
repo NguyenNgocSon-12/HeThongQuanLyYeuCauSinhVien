@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../fake_user_db.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -15,6 +16,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController confirmPassController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false; // Biến trạng thái hiển thị vòng xoay tải dữ liệu
 
   @override
   void dispose() {
@@ -25,35 +27,82 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void handleRegister() {
+  Future<void> handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final name = nameController.text.trim();
     final mssv = mssvController.text.trim();
     final pass = passController.text.trim();
+    
+    // Tạo email ảo tự động dựa trên MSSV đồng bộ với màn hình Đăng nhập
+    final email = "$mssv@huit.edu.vn"; 
 
-    /// CHECK TRÙNG
-    final exist = FakeUserDB.users.any((u) => u["mssv"] == mssv);
-
-    if (exist) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("MSSV đã tồn tại")),
-      );
-      return;
-    }
-
-    /// LƯU USER (thêm role luôn cho chuẩn)
-    FakeUserDB.users.add({
-      "name": nameController.text.trim(),
-      "mssv": mssv,
-      "pass": pass,
-      "role": "student",
+    setState(() {
+      _isLoading = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Đăng ký thành công")),
-    );
+    try {
+      // BƯỚC 1: Tạo tài khoản trên hệ thống Firebase Authentication
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: pass);
 
-    Navigator.pop(context);
+      final uid = userCredential.user?.uid;
+
+      if (uid != null) {
+        // BƯỚC 2: Đồng bộ thông tin chi tiết của Sinh viên lên Cloud Firestore
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          "uid": uid,
+          "name": name,
+          "mssv": mssv,
+          "email": email,
+          "role": "student", // Gán quyền tự động cho tài khoản đăng ký là sinh viên
+          "createdAt": FieldValue.serverTimestamp(),
+        });
+
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Đăng ký tài khoản thành công!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Đăng ký xong, đưa sinh viên quay lại màn hình đăng nhập
+        Navigator.pop(context);
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMsg = "Đăng ký thất bại!";
+      
+      // Bắt các trường hợp lỗi Firebase phản hồi về
+      if (e.code == 'email-already-in-use') {
+        errorMsg = "Mã số sinh viên này đã được đăng ký tài khoản!";
+      } else if (e.code == 'weak-password') {
+        errorMsg = "Mật khẩu quá ngắn hoặc quá yếu!";
+      } else if (e.code == 'network-request-failed') {
+        errorMsg = "Lỗi kết nối mạng đến Server Firebase!";
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Hệ thống gặp sự cố: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -61,6 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       body: Container(
         width: double.infinity,
+        height: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -81,6 +131,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.app_registration,
                           size: 60, color: Colors.blue),
@@ -94,11 +145,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 20),
 
-                      /// NAME
+                      /// FIELD HỌ TÊN
                       TextFormField(
                         controller: nameController,
+                        enabled: !_isLoading,
                         validator: (value) =>
-                            value!.isEmpty ? "Không được để trống" : null,
+                            value!.isEmpty ? "Không được để trống họ tên" : null,
                         decoration: InputDecoration(
                           labelText: "Họ tên",
                           prefixIcon: const Icon(Icons.person),
@@ -110,11 +162,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 15),
 
-                      /// MSSV
+                      /// FIELD MSSV
                       TextFormField(
                         controller: mssvController,
+                        enabled: !_isLoading,
+                        keyboardType: TextInputType.number,
                         validator: (value) =>
-                            value!.isEmpty ? "Nhập MSSV" : null,
+                            value!.isEmpty ? "Vui lòng nhập MSSV" : null,
                         decoration: InputDecoration(
                           labelText: "MSSV",
                           prefixIcon: const Icon(Icons.badge),
@@ -126,16 +180,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 15),
 
-                      /// PASSWORD
+                      /// FIELD MẬT KHẨU
                       TextFormField(
                         controller: passController,
+                        enabled: !_isLoading,
                         obscureText: true,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return "Nhập mật khẩu";
+                            return "Vui lòng nhập mật khẩu";
                           }
-                          if (value.length < 3) {
-                            return "Ít nhất 3 ký tự";
+                          if (value.length < 6) {
+                            return "Mật khẩu Firebase yêu cầu ít nhất 6 ký tự";
                           }
                           return null;
                         },
@@ -150,13 +205,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 15),
 
-                      /// CONFIRM PASSWORD
+                      /// FIELD XÁC NHẬN MẬT KHẨU
                       TextFormField(
                         controller: confirmPassController,
+                        enabled: !_isLoading,
                         obscureText: true,
                         validator: (value) {
                           if (value != passController.text) {
-                            return "Mật khẩu không khớp";
+                            return "Mật khẩu xác nhận không trùng khớp";
                           }
                           return null;
                         },
@@ -169,27 +225,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 25),
 
-                      /// BUTTON
+                      /// NÚT ĐĂNG KÝ / LOADING BUTTON
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: handleRegister,
+                          onPressed: _isLoading ? null : handleRegister,
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text("Đăng ký"),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  "Đăng ký",
+                                  style: TextStyle(fontSize: 16),
+                                ),
                         ),
                       ),
 
                       const SizedBox(height: 10),
 
                       TextButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: _isLoading
+                            ? null
+                            : () => Navigator.pop(context),
                         child: const Text("Quay lại đăng nhập"),
                       )
                     ],

@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "197026607898",
-    "project_id": "student-request-system-33145",
-    "storage_bucket": "student-request-system-33145.firebasestorage.app"
+    "project_number": "786323330998",
+    "firebase_url": "https://fir-fd3b4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "fir-fd3b4",
+    "storage_bucket": "fir-fd3b4.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:197026607898:android:1c9f74dd0c1d67b77e72a3",
+        "mobilesdk_app_id": "1:786323330998:android:490bdd566de7a61960d317",
         "android_client_info": {
           "package_name": "com.example.doanltddfinal"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDHiqwFSIAIIO2FkVR-xnCXzfN3_bEma5k"
+          "current_key": "AIzaSyB1X-jHfUThM7Q3_shBm0knAOoiv0kgDFM"
         }
       ],
       "services": {
