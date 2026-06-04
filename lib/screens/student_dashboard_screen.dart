@@ -1,86 +1,70 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+
+import '../models/request_model.dart';
 import '../providers/theme_provider.dart';
+import '../repository/request_repository.dart';
 
-class StudentDashboardScreen extends StatefulWidget {
-  const StudentDashboardScreen({Key? key}) : super(key: key);
+class StudentDashboardScreen extends StatelessWidget {
+  const StudentDashboardScreen({super.key});
 
-  @override
-  _StudentDashboardScreenState createState() => _StudentDashboardScreenState();
-}
-
-class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
-  String _currentMssv = "";
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStudentSession();
-  }
-
-  void _loadStudentSession() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _currentMssv = prefs.getString('studentMssv') ?? "";
-    });
-  }
+  static final RequestRepository _repository = RequestRepository();
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final themeProvider = context.watch<ThemeProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sinh viên: $_currentMssv'),
+        title: Text('Sinh viên: ${currentUser?.email?.split("@").first ?? ""}'),
         actions: [
-          // Nút bật/tắt Dark Mode bằng Provider
           IconButton(
-            icon: Icon(themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode),
-            onPressed: () => themeProvider.toggleTheme(),
-          )
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+            ),
+            onPressed: themeProvider.toggleTheme,
+          ),
         ],
       ),
-      body: _currentMssv.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : StreamBuilder<QuerySnapshot>(
-              // Thực hiện xử lý FutureBuilder/StreamBuilder lấy dữ liệu động realtime
-              stream: FirebaseFirestore.instance
-                  .collection('requests')
-                  .where('studentMssv', isEqualTo: _currentMssv)
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
+      body: currentUser == null
+          ? const Center(child: Text('Vui lòng đăng nhập lại.'))
+          : StreamBuilder<List<RequestModel>>(
+              stream: _repository.watchStudentRequests(currentUser.uid),
               builder: (context, snapshot) {
-                // 1. Xử lý loading snapshot
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Lỗi tải dữ liệu: ${snapshot.error}'),
+                  );
+                }
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
-                // 2. Xử lý error từ Firebase
-                if (snapshot.hasError) {
-                  return Center(child: Text('Lỗi tải dữ liệu: ${snapshot.error}'));
+                if (snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text('Bạn chưa tạo yêu cầu hành chính nào.'),
+                  );
                 }
 
-                // 3. Xử lý danh sách trống
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('Bạn chưa tạo yêu cầu nào hành chính nào.'));
-                }
-
-                final requests = snapshot.data!.docs;
-
+                final requests = snapshot.data!;
                 return ListView.builder(
                   itemCount: requests.length,
                   itemBuilder: (context, index) {
-                    var doc = requests[index].data() as Map<String, dynamic>;
+                    final request = requests[index];
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 6,
+                      ),
                       child: ListTile(
-                        title: Text(doc['title'] ?? 'Không tiêu đề'),
-                        subtitle: Text(doc['content'] ?? ''),
+                        title: Text(request.title),
+                        subtitle: Text(request.content),
                         trailing: Chip(
-                          label: Text(doc['status'] ?? 'Chờ duyệt'),
-                          backgroundColor: doc['status'] == 'Đã duyệt' ? Colors.green.shade200 : Colors.orange.shade200,
+                          label: Text(request.status.text),
+                          backgroundColor: request.status.color.withValues(
+                            alpha: 0.2,
+                          ),
                         ),
                       ),
                     );

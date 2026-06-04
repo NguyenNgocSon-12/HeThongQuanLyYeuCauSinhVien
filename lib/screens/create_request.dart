@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/request_model.dart';
+import '../repository/request_repository.dart';
+import '../services/auth_service.dart';
+import '../services/request_validator.dart';
 
 class CreateRequestScreen extends StatefulWidget {
   const CreateRequestScreen({super.key});
@@ -12,6 +15,8 @@ class CreateRequestScreen extends StatefulWidget {
 
 class _CreateRequestScreenState extends State<CreateRequestScreen> {
   final TextEditingController contentController = TextEditingController();
+  final AuthService _authService = AuthService();
+  final RequestRepository _requestRepository = RequestRepository();
 
   final List<String> templates = [
     "Xin giấy xác nhận sinh viên",
@@ -30,8 +35,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
     super.dispose();
   }
 
-  // Logic đẩy dữ liệu yêu cầu hành chính lên Firebase Firestore
-  void _submitRequest() async {
+  Future<void> _submitRequest() async {
     if (selectedTemplate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -55,62 +59,53 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
     setState(() => _isLoading = true); // Bật hiệu ứng loading, khóa UI
 
     try {
-      // 1. LẤY LIÊN KẾT TÀI KHOẢN ĐANG LOGIN TỪ FIREBASE AUTH (Cực kỳ bảo mật)
-      User? currentUser = FirebaseAuth.instance.currentUser;
-      
-      String mssv = "UNKNOWN";
-      String studentName = "Ẩn danh";
-
-      if (currentUser != null) {
-        // Tận dụng email để cắt ra MSSV phòng trường hợp SharedPreferences lỗi
-        if (currentUser.email != null && currentUser.email!.contains('@')) {
-          mssv = currentUser.email!.split('@')[0];
-        }
-
-        // Truy vấn ngược vào Firestore để lấy thêm Họ Tên thật của sinh viên
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
-            
-        if (userDoc.exists && userDoc.data() != null) {
-          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-          studentName = userData['name'] ?? "Ẩn danh";
-          if (userData['mssv'] != null) mssv = userData['mssv'];
-        }
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        throw const RequestValidationException(
+          'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+        );
       }
 
-      // Dự phòng: Nếu Firebase Auth trục trặc, vẫn cố gắng đọc từ SharedPreferences
-      if (mssv == "UNKNOWN") {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        mssv = prefs.getString('studentMssv') ?? prefs.getString('mssv') ?? "UNKNOWN";
-      }
+      final profile = await _authService.getUserProfile(currentUser.uid);
+      final fallbackMssv = currentUser.email?.split('@').first ?? '';
 
-      // 2. ĐẨY DATA REALTIME LÊN FIRESTORE COLLECTION 'REQUESTS'
-      await FirebaseFirestore.instance.collection('requests').add({
-        'userId': currentUser?.uid ?? "",         // ID tài khoản để phân quyền bộ lọc về sau
-        'studentMssv': mssv,                      // Mã số sinh viên
-        'studentName': studentName,              // Họ tên sinh viên (Thêm mới giúp Cán bộ dễ đọc)
-        'title': selectedTemplate,                // Loại yêu cầu hành chính
-        'content': contentController.text.trim(), // Nội dung giải trình
-        'status': 'Chờ duyệt',                     // Trạng thái khởi tạo mặc định
-        'createdAt': FieldValue.serverTimestamp(),// Thời gian máy chủ Firebase
-      });
+      final request = RequestModel(
+        userId: currentUser.uid,
+        studentId: profile?.mssv ?? fallbackMssv,
+        studentName: profile?.fullName ?? 'Chưa cập nhật họ tên',
+        title: selectedTemplate!,
+        content: contentController.text,
+        type: RequestType.fromTitle(selectedTemplate!),
+      );
+
+      final savedRequest = await _requestRepository.createRequest(request);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gửi thành công yêu cầu: $selectedTemplate'),
-            backgroundColor: Colors.green,
+            content: Text(
+              savedRequest.isSynced
+                  ? 'Gửi thành công yêu cầu: $selectedTemplate'
+                  : 'Đã lưu ngoại tuyến. Yêu cầu sẽ tự đồng bộ khi có mạng.',
+            ),
+            backgroundColor: savedRequest.isSynced
+                ? Colors.green
+                : Colors.orange,
           ),
         );
         Navigator.pop(context); // Quay về màn hình Dashboard sinh viên
+      }
+    } on RequestValidationException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.orange),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi kết nối Firebase: ${e.toString()}'),
+            content: Text('Không thể gửi yêu cầu: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -143,11 +138,15 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1565C0)),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF1565C0),
+                    ),
                   ),
                   SizedBox(height: 15),
-                  Text("Hệ thống đang gửi dữ liệu lên Firestore...", 
-                       style: TextStyle(color: Colors.blueGrey, fontSize: 14)),
+                  Text(
+                    "Hệ thống đang gửi dữ liệu lên Firestore...",
+                    style: TextStyle(color: Colors.blueGrey, fontSize: 14),
+                  ),
                 ],
               ),
             )
@@ -161,17 +160,14 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF1565C0),
-                          Color(0xFF42A5F5),
-                        ],
+                        colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.blue.withOpacity(0.2),
+                          color: Colors.blue.withValues(alpha: 0.2),
                           blurRadius: 14,
                           offset: const Offset(0, 6),
                         ),
@@ -201,10 +197,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                         SizedBox(height: 12),
                         Text(
                           "Điền đầy đủ thông tin để Khoa CNTT xử lý nhanh hơn.",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
@@ -220,7 +213,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                       borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -232,13 +225,11 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                         /// ================= REQUEST TYPE =================
                         const Text(
                           "Loại yêu cầu",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
                         DropdownButtonFormField<String>(
-                          value: selectedTemplate,
+                          initialValue: selectedTemplate,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.list_alt),
                             hintText: "Chọn loại yêu cầu",
@@ -267,9 +258,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                         /// ================= CONTENT =================
                         const Text(
                           "Nội dung chi tiết",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
                         TextField(
@@ -300,7 +289,9 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text("Chức năng upload file minh chứng sẽ được cập nhật ở phiên bản sau"),
+                                content: Text(
+                                  "Chức năng upload file minh chứng sẽ được cập nhật ở phiên bản sau",
+                                ),
                               ),
                             );
                           },
@@ -321,7 +312,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            onPressed: _submitRequest, 
+                            onPressed: _submitRequest,
                             icon: const Icon(Icons.send, color: Colors.white),
                             label: const Text(
                               "Gửi yêu cầu",

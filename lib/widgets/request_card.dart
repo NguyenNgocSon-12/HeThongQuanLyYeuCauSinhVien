@@ -11,9 +11,7 @@ class RequestCard extends StatelessWidget {
     return Card(
       elevation: 6,
       margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
         leading: const Icon(Icons.description, color: Colors.blue),
         title: Text(
@@ -26,7 +24,7 @@ class RequestCard extends StatelessWidget {
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: r.status.color.withOpacity(0.2),
+            color: r.status.color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(

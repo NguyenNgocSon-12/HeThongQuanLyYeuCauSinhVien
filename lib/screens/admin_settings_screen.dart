@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import '../services/auth_service.dart';
 
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -28,7 +29,6 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-
           /// 🔹 ACCOUNT
           _section("Tài khoản", [
             _tile(Icons.person, "Thông tin admin", () {}),
@@ -98,10 +98,10 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
-              )
+              ),
             ],
           ),
           child: Column(children: children),
@@ -127,9 +127,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     final confirm = await showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text("Xác nhận"),
         content: const Text("Bạn có chắc muốn đăng xuất không?"),
         actions: [
@@ -139,9 +137,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text("Đăng xuất"),
           ),
         ],
@@ -149,9 +145,11 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     );
 
     if (confirm == true) {
+      await AuthService().signOut();
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => LoginScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,
       );
     }

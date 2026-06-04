@@ -6,6 +6,7 @@ import 'profile_page.dart';
 import 'login_screen.dart';
 import 'settings_page.dart';
 import 'create_request.dart';
+import '../services/auth_service.dart';
 
 class StudentHome extends StatefulWidget {
   const StudentHome({super.key});
@@ -15,7 +16,6 @@ class StudentHome extends StatefulWidget {
 }
 
 class _StudentHomeState extends State<StudentHome> {
-
   /// INDEX BOTTOM NAV
   int _bottomIndex = 0;
 
@@ -52,24 +52,18 @@ class _StudentHomeState extends State<StudentHome> {
 
         title: const Text(
           "Hệ thống yêu cầu sinh viên",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
 
         actions: [
           Stack(
             children: [
               IconButton(
-                icon: const Icon(
-                  Icons.notifications_none_rounded,
-                ),
+                icon: const Icon(Icons.notifications_none_rounded),
 
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Mở trang thông báo"),
-                    ),
+                    const SnackBar(content: Text("Mở trang thông báo")),
                   );
                 },
               ),
@@ -100,23 +94,16 @@ class _StudentHomeState extends State<StudentHome> {
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(
-                color: Color(0xFF1565C0),
-              ),
+              decoration: const BoxDecoration(color: Color(0xFF1565C0)),
 
               accountName: const Text("Nguyễn Văn A"),
 
-              accountEmail: const Text(
-                "22110234@student.edu.vn",
-              ),
+              accountEmail: const Text("22110234@student.edu.vn"),
 
               currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,
 
-                child: Icon(
-                  Icons.person,
-                  color: Colors.blue,
-                ),
+                child: Icon(Icons.person, color: Colors.blue),
               ),
             ),
 
@@ -146,9 +133,7 @@ class _StudentHomeState extends State<StudentHome> {
 
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const SettingsPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const SettingsPage()),
                 );
               },
             ),
@@ -163,12 +148,12 @@ class _StudentHomeState extends State<StudentHome> {
 
               title: const Text("Đăng xuất"),
 
-              onTap: () {
+              onTap: () async {
+                await AuthService().signOut();
+                if (!context.mounted) return;
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const LoginScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
                 );
               },
             ),
@@ -192,14 +177,11 @@ class _StudentHomeState extends State<StudentHome> {
         unselectedItemColor: Colors.grey,
 
         onTap: (value) {
-
           /// TẠO YÊU CẦU
           if (value == 1) {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const CreateRequestScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const CreateRequestScreen()),
             );
 
             return;
@@ -212,7 +194,6 @@ class _StudentHomeState extends State<StudentHome> {
         },
 
         items: const [
-
           /// HOME
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),

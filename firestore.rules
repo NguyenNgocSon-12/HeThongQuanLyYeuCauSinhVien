@@ -1,0 +1,150 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function currentUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && currentUserData().role == 'admin';
+    }
+
+    function validStatus(status) {
+      return status in ['pending', 'processing', 'approved', 'rejected'];
+    }
+
+    function validType(type) {
+      return type in [
+        'confirm',
+        'leave',
+        'card_replacement',
+        'course_registration',
+        'complaint',
+        'other'
+      ];
+    }
+
+    function validNewRequest(data) {
+      return data.keys().hasOnly([
+          'userId',
+          'studentId',
+          'studentName',
+          'studentNameLower',
+          'title',
+          'content',
+          'status',
+          'type',
+          'adminNote',
+          'processedBy',
+          'createdAt',
+          'updatedAt',
+          'processedAt'
+        ])
+        && data.keys().hasAll([
+          'userId',
+          'studentId',
+          'studentName',
+          'studentNameLower',
+          'title',
+          'content',
+          'status',
+          'type',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.userId == request.auth.uid
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && currentUserData().mssv == data.studentId
+        && currentUserData().get('fullName', currentUserData().get('name', ''))
+          == data.studentName
+        && data.studentId is string
+        && data.studentId.size() >= 6
+        && data.studentId.size() <= 20
+        && data.studentName is string
+        && data.studentName.size() > 0
+        && data.studentName.size() <= 100
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 120
+        && data.content is string
+        && data.content.size() >= 10
+        && data.content.size() <= 2000
+        && data.status == 'pending'
+        && validType(data.type)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.role == 'student';
+
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['fullName', 'fullNameLower', 'className']);
+
+      allow delete: if isAdmin();
+    }
+
+    match /requests/{requestId} {
+      allow create: if signedIn() && validNewRequest(request.resource.data);
+
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'adminNote',
+          'processedBy',
+          'processedAt',
+          'updatedAt'
+        ])
+        && validStatus(request.resource.data.status)
+        && request.resource.data.adminNote is string
+        && request.resource.data.processedBy == request.auth.uid
+        && request.resource.data.processedAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+
+      allow delete: if isAdmin()
+        || (signedIn()
+          && resource.data.userId == request.auth.uid
+          && resource.data.status == 'pending');
+    }
+
+    match /notifications/{notificationId} {
+      allow create: if isAdmin()
+        && request.resource.data.userId is string
+        && request.resource.data.requestId is string
+        && request.resource.data.isRead == false
+        && request.resource.data.createdAt is timestamp;
+
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['isRead', 'readAt'])
+        && request.resource.data.isRead is bool
+        && request.resource.data.readAt is timestamp;
+
+      allow delete: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+    }
+  }
+}

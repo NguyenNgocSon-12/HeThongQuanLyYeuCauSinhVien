@@ -22,16 +22,15 @@ class RequestAdminCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 5),
-          )
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -45,10 +44,12 @@ class RequestAdminCard extends StatelessWidget {
 
               /// TYPE BADGE
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: request.type.color.withOpacity(0.15),
+                  color: request.type.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -66,42 +67,34 @@ class RequestAdminCard extends StatelessWidget {
           const SizedBox(height: 6),
 
           /// NAME
-          Text(
-            request.studentName,
-            style: const TextStyle(color: Colors.grey),
-          ),
+          Text(request.studentName, style: const TextStyle(color: Colors.grey)),
 
           const Divider(height: 20),
 
           /// TITLE
           Text(
             request.title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
 
           const SizedBox(height: 6),
 
           /// CONTENT
-          Text(
-            request.content,
-            style: const TextStyle(color: Colors.black87),
-          ),
+          Text(request.content, style: const TextStyle(color: Colors.black87)),
 
           const SizedBox(height: 12),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-
               /// STATUS BADGE
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 5),
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: request.status.color.withOpacity(0.15),
+                  color: request.status.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -116,10 +109,7 @@ class RequestAdminCard extends StatelessWidget {
               /// DATE
               Text(
                 _formatDate(request.createdAt),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ],
           ),

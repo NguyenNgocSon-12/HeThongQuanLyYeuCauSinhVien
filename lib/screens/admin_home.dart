@@ -9,7 +9,6 @@ class AdminHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEEF1F5), // 🔥 nền xám chuẩn
-
       /// 🔥 APPBAR
       appBar: AppBar(
         title: const Text("Admin Dashboard"),
@@ -25,9 +24,7 @@ class AdminHome extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const AdminSettingsScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const AdminSettingsScreen()),
               );
             },
           ),
@@ -40,14 +37,10 @@ class AdminHome extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// 👋 HEADER
             const Text(
               "Xin chào Admin 👋",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 20),
@@ -59,7 +52,6 @@ class AdminHome extends StatelessWidget {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 children: [
-
                   _buildCard(
                     icon: Icons.list_alt,
                     title: "Tất cả yêu cầu",
@@ -68,8 +60,7 @@ class AdminHome extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const AdminRequestListScreen(),
+                          builder: (_) => const AdminRequestListScreen(),
                         ),
                       );
                     },
@@ -120,7 +111,7 @@ class AdminHome extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -135,9 +126,7 @@ class AdminHome extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),

@@ -7,22 +7,18 @@ import 'screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()..loadTheme()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => ThemeProvider())],
       child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +29,8 @@ class MyApp extends StatelessWidget {
       themeMode: themeProvider.themeMode,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
-      home: const LoginScreen(), // Trỏ về file màn hình đăng nhập bằng MSSV của bạn
+      home:
+          const LoginScreen(), // Trỏ về file màn hình đăng nhập bằng MSSV của bạn
     );
   }
 }
