@@ -3,10 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/theme_provider.dart';
-<<<<<<< HEAD
 import 'providers/auth_provider.dart';
-=======
->>>>>>> 272fdd21827b89b258f95986e8ddc9720b355623
 import 'screens/login_screen.dart';
 
 void main() async {
@@ -14,19 +11,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-<<<<<<< HEAD
-
-=======
-  
->>>>>>> 272fdd21827b89b258f95986e8ddc9720b355623
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()..loadTheme()),
-<<<<<<< HEAD
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-=======
->>>>>>> 272fdd21827b89b258f95986e8ddc9720b355623
       ],
       child: const MyApp(),
     ),
@@ -45,11 +34,7 @@ class MyApp extends StatelessWidget {
       themeMode: themeProvider.themeMode,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
-<<<<<<< HEAD
       home: const LoginScreen(),
-=======
-      home: const LoginScreen(), // Trỏ về file màn hình đăng nhập bằng MSSV của bạn
->>>>>>> 272fdd21827b89b258f95986e8ddc9720b355623
     );
   }
 }

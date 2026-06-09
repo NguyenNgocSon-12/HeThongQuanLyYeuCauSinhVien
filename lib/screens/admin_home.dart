@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'admin_request_list.dart';
 import 'admin_settings_screen.dart';
 import 'admin_statistical_dashboard.dart';
+import 'user_management_screen.dart';
 import '../services/firebase_notification_service.dart';
 
 class AdminHome extends StatefulWidget {
@@ -105,7 +106,15 @@ class _AdminHomeState extends State<AdminHome> {
             ListTile(
               leading: const Icon(Icons.people),
               title: const Text("Quản lý tài khoản"),
-              onTap: () {},
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const UserManagementScreen(),
+                  ),
+                );
+              },
             ),
             
             ListTile(
