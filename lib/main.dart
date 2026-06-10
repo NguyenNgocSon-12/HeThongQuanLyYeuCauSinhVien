@@ -28,12 +28,41 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Hệ thống Quản lý Yêu cầu Sinh viên',
       themeMode: themeProvider.themeMode,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
+      
+      // Theme Sáng
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white, // Màu AppBar sáng
+          foregroundColor: Colors.black,  // Màu chữ/icon trên AppBar
+          elevation: 0,
+        ),
+      ),
+      
+      // Theme Tối
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF121212), // Nền tối hơn
+        cardColor: const Color(0xFF1E1E1E),              // Màu thẻ tối
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF121212), // Màu AppBar tối
+          foregroundColor: Colors.white,      // Màu chữ/icon trên AppBar
+          elevation: 0,
+        ),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF42A5F5), // Màu nhấn
+          surface: Color(0xFF121212),
+        ),
+      ),
+      
       home: const LoginScreen(),
     );
   }

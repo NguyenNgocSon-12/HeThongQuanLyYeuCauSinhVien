@@ -17,8 +17,7 @@ class ProcessRequestScreen extends StatefulWidget {
 
 class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
   final TextEditingController noteController = TextEditingController();
-  final FirestoreRequestRepository _repository =
-      FirestoreRequestRepository();
+  final FirestoreRequestRepository _repository = FirestoreRequestRepository();
   final FirebaseStorageService _storageService = FirebaseStorageService();
   final FirebaseNotificationService _notificationService =
       FirebaseNotificationService();
@@ -46,7 +45,6 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
         type: FileType.any,
         allowMultiple: false,
       );
-
       if (result != null && result.files.single.path != null) {
         setState(() {
           _selectedFile = File(result.files.single.path!);
@@ -136,19 +134,13 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
@@ -181,7 +173,6 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   /// TITLE
                   Text(
                     r.title,
@@ -210,7 +201,9 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                       const Text("Trạng thái: "),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: r.status.color.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
@@ -260,8 +253,10 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.attach_file,
-                                color: Colors.blue.shade600),
+                            Icon(
+                              Icons.attach_file,
+                              color: Colors.blue.shade600,
+                            ),
                             const SizedBox(width: 8),
                             const Text(
                               "Evidence File",
@@ -281,20 +276,21 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Expanded(
                                   child: Row(
                                     children: [
-                                      Icon(Icons.check_circle,
-                                          color: Colors.green.shade600),
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green.shade600,
+                                      ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          FirebaseStorageService
-                                              .getFileNameFromUrl(
-                                                  _uploadedFileUrl!),
+                                          FirebaseStorageService.getFileNameFromUrl(
+                                            _uploadedFileUrl!,
+                                          ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
@@ -307,26 +303,32 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
                                   onPressed: _isProcessing
                                       ? null
                                       : () async {
                                           try {
                                             await _storageService
                                                 .deleteEvidenceFile(
-                                                    _uploadedFileUrl!);
-                                            setState(() =>
-                                                _uploadedFileUrl = null);
+                                                  _uploadedFileUrl!,
+                                                );
+                                            setState(
+                                              () => _uploadedFileUrl = null,
+                                            );
                                             _showSuccessSnackBar(
-                                                'File deleted');
+                                              'File deleted',
+                                            );
                                           } catch (e) {
                                             _showErrorSnackBar(
-                                                'Failed to delete file');
+                                              'Failed to delete file',
+                                            );
                                           }
                                         },
                                   tooltip: "Delete file",
-                                )
+                                ),
                               ],
                             ),
                           ),
@@ -339,20 +341,19 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Expanded(
                                   child: Row(
                                     children: [
-                                      Icon(Icons.file_present,
-                                          color: Colors.orange.shade600),
+                                      Icon(
+                                        Icons.file_present,
+                                        color: Colors.orange.shade600,
+                                      ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          _selectedFile!.path
-                                              .split('/')
-                                              .last,
+                                          _selectedFile!.path.split('/').last,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
@@ -367,14 +368,18 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                                 if (!_isProcessing)
                                   ElevatedButton.icon(
                                     onPressed: _uploadFile,
-                                    icon: const Icon(Icons.cloud_upload,
-                                        size: 16),
+                                    icon: const Icon(
+                                      Icons.cloud_upload,
+                                      size: 16,
+                                    ),
                                     label: const Text("Upload"),
                                     style: ElevatedButton.styleFrom(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
                                     ),
-                                  )
+                                  ),
                               ],
                             ),
                           ),
@@ -383,9 +388,11 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                         ElevatedButton.icon(
                           onPressed: _isProcessing ? null : _pickFile,
                           icon: const Icon(Icons.attach_file, size: 16),
-                          label: Text(_selectedFile == null
-                              ? "Choose File"
-                              : "Change File"),
+                          label: Text(
+                            _selectedFile == null
+                                ? "Choose File"
+                                : "Change File",
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue.shade600,
                           ),
@@ -437,8 +444,7 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                   if (widget.request.processedAt != null) ...[
                     const Divider(),
                     Text("Người xử lý: ${widget.request.processedBy ?? "N/A"}"),
-                    Text(
-                        "Thời gian: ${widget.request.processedAt.toString()}"),
+                    Text("Thời gian: ${widget.request.processedAt.toString()}"),
                     if (widget.request.adminNote != null &&
                         widget.request.adminNote!.isNotEmpty)
                       Text("Ghi chú: ${widget.request.adminNote}"),
@@ -450,12 +456,14 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isProcessing ? null : () {
-                        Navigator.pop(context, true);
-                      },
+                      onPressed: _isProcessing
+                          ? null
+                          : () {
+                              Navigator.pop(context, true);
+                            },
                       child: const Text("Quay lại"),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),

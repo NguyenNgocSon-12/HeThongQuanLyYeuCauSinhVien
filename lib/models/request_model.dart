@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// ================== STATUS ==================
-enum RequestStatus {
-  pending,
-  processing,
-  approved,
-  rejected,
-}
+enum RequestStatus { pending, processing, approved, rejected }
 
 extension RequestStatusExtension on RequestStatus {
   String get text {
@@ -36,12 +31,7 @@ extension RequestStatusExtension on RequestStatus {
   }
 }
 
-
-enum RequestType {
-  confirm,    
-  leave,      
-  complaint,  
-}
+enum RequestType { confirm, leave, complaint }
 
 extension RequestTypeExtension on RequestType {
   String get text {
@@ -122,21 +112,50 @@ class RequestModel {
 
   /// ================== FROM MAP ==================
   factory RequestModel.fromMap(Map<String, dynamic> map) {
+    // 1. Xử lý status an toàn: Đọc được cả String (cũ) và int (mới)
+    RequestStatus status;
+    final statusRaw = map['status'];
+
+    if (statusRaw is int) {
+      status = RequestStatus.values[statusRaw];
+    } else if (statusRaw is String) {
+      // Chuyển đổi từ text cũ về Enum
+      if (statusRaw == "Chờ xử lý")
+        status = RequestStatus.pending;
+      else if (statusRaw == "Đang xử lý")
+        status = RequestStatus.processing;
+      else if (statusRaw == "Đã duyệt")
+        status = RequestStatus.approved;
+      else if (statusRaw == "Từ chối")
+        status = RequestStatus.rejected;
+      else
+        status = RequestStatus.pending;
+    } else {
+      status = RequestStatus.pending;
+    }
+
     return RequestModel(
       id: map['id'],
-      title: map['title'],
-      content: map['content'],
-      studentName: map['studentName'],
-      studentId: map['studentId'],
-      status: RequestStatus.values[map['status']],
-      type: RequestType.values[map['type'] ?? 0],
+      title: map['title'] ?? '',
+      content:
+          map['thrilled'] ??
+          map['content'] ??
+          '', // Xử lý cả field "thrilled" và "content"
+      studentName: map['studentName'] ?? '',
+      studentId:
+          map['studentMssv'] ??
+          map['studentId'] ??
+          '', // Xử lý cả field "studentMssv" và "studentId"
+      status: status,
+      // Xử lý tương tự cho type nếu cần
+      type: (map['type'] is int)
+          ? RequestType.values[map['type']]
+          : RequestType.confirm,
       adminNote: map['adminNote'],
       processedBy: map['processedBy'],
-      evidenceFileUrl: map['evidenceFileUrl'],
-      createdAt: DateTime.parse(map['createdAt']),
-      processedAt: map['processedAt'] != null
-          ? DateTime.parse(map['processedAt'])
-          : null,
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'])
+          : DateTime.now(),
     );
   }
 }
