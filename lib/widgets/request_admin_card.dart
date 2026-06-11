@@ -15,6 +15,9 @@ class RequestAdminCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final primaryTextColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white60 : Colors.grey[600];
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -37,9 +40,10 @@ class RequestAdminCard extends StatelessWidget {
             children: [
               Text(
                 request.studentId,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
+                  color: primaryTextColor,
                 ),
               ),
 
@@ -68,7 +72,7 @@ class RequestAdminCard extends StatelessWidget {
           /// NAME
           Text(
             request.studentName,
-            style: const TextStyle(color: Colors.grey),
+            style: TextStyle(color: secondaryTextColor,),
           ),
 
           const Divider(height: 20),
@@ -76,9 +80,10 @@ class RequestAdminCard extends StatelessWidget {
           /// TITLE
           Text(
             request.title,
-            style: const TextStyle(
+            style: TextStyle( 
               fontSize: 16,
               fontWeight: FontWeight.w600,
+              color: primaryTextColor,
             ),
           ),
 
@@ -87,7 +92,7 @@ class RequestAdminCard extends StatelessWidget {
           /// CONTENT
           Text(
             request.content,
-            style: const TextStyle(color: Colors.black87),
+            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54,),
           ),
 
           const SizedBox(height: 12),
@@ -116,9 +121,9 @@ class RequestAdminCard extends StatelessWidget {
               /// DATE
               Text(
                 _formatDate(request.createdAt),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: secondaryTextColor,
                 ),
               ),
             ],
@@ -133,6 +138,7 @@ class RequestAdminCard extends StatelessWidget {
               label: const Text("Xử lý"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

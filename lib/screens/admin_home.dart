@@ -121,12 +121,6 @@ class _AdminHomeState extends State<AdminHome> {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const UserManagementScreen()));
               },
             ),
-            
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text("Nhật ký hoạt động"),
-              onTap: () {},
-            ),
 
             ListTile(
               leading: const Icon(Icons.settings),
