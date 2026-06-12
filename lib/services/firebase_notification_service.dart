@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirebaseNotificationService {
   static final FirebaseNotificationService _instance =
@@ -35,10 +36,10 @@ class FirebaseNotificationService {
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
-      requestSoundPermission: true,
-      requestBadgePermission: true,
-      requestAlertPermission: true,
-    );
+          requestSoundPermission: true,
+          requestBadgePermission: true,
+          requestAlertPermission: true,
+        );
 
     const InitializationSettings initSettings = InitializationSettings(
       android: androidSettings,
@@ -128,13 +129,13 @@ class FirebaseNotificationService {
     try {
       const AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
-        'admin_channel',
-        'Admin Notifications',
-        channelDescription: 'Notifications for admin dashboard',
-        importance: Importance.max,
-        priority: Priority.high,
-        showWhen: true,
-      );
+            'admin_channel',
+            'Admin Notifications',
+            channelDescription: 'Notifications for admin dashboard',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: true,
+          );
 
       const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
         presentAlert: true,
@@ -170,14 +171,21 @@ class FirebaseNotificationService {
 
   // Show notification for request status update
   Future<void> notifyRequestStatusUpdate(
-    String studentId,
+    String userId,
     String newStatus,
   ) async {
-    await _showLocalNotification(
-      title: 'Request Status Updated',
-      body: 'Request $studentId is now: $newStatus',
-      payload: {'type': 'status_update', 'studentId': studentId},
-    );
+    // Lưu vào Firestore để sinh viên thấy
+    try {
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': userId,
+        'title': 'Cập nhật yêu cầu',
+        'body': 'Yêu cầu của bạn đã được chuyển sang: $newStatus',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Failed to save notification: $e');
+    }
   }
 
   // Subscribe admin to admin_updates topic

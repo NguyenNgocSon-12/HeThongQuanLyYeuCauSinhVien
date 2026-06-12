@@ -5,6 +5,7 @@ import '../models/request_model.dart';
 import '../repository/firestore_request_repository.dart';
 import '../services/firebase_storage_service.dart';
 import '../services/firebase_notification_service.dart';
+import 'full_screen_image.dart';
 
 class ProcessRequestScreen extends StatefulWidget {
   final RequestModel request;
@@ -116,7 +117,7 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
 
       // Show notification
       await _notificationService.notifyRequestStatusUpdate(
-        widget.request.studentId,
+        widget.request.userId ?? widget.request.studentId,
         newStatus.text,
       );
 
@@ -192,7 +193,40 @@ class _ProcessRequestScreenState extends State<ProcessRequestScreen> {
 
                   /// CONTENT
                   Text("Nội dung:\n${r.content}"),
+                  // --- MINH CHỨNG TỪ SINH VIÊN ---
+                  if (r.evidenceFileUrl != null &&
+                      r.evidenceFileUrl!.isNotEmpty) ...[
+                    const Text(
+                      "Minh chứng kèm theo:",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 5),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                FullScreenImage(imageUrl: r.evidenceFileUrl!),
+                          ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          r.evidenceFileUrl!,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.broken_image, size: 50),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
 
+                  // --------------------------------
                   const SizedBox(height: 20),
 
                   /// STATUS

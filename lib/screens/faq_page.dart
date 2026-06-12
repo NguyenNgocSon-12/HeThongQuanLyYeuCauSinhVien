@@ -5,6 +5,7 @@ class FAQPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final List<Map<String, String>> faqData = [
       {
         "question": "Làm thế nào để tạo yêu cầu mới?",
@@ -25,24 +26,43 @@ class FAQPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Câu hỏi thường gặp (FAQ)")),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text("Câu hỏi thường gặp", style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         itemCount: faqData.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          return Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            child: ExpansionTile(
-              title: Text(
-                faqData[index]['question']!,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(faqData[index]['answer']!),
+          return Container(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
+            ),
+            child: Theme(
+              data: theme.copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                title: Text(
+                  faqData[index]['question']!,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
-              ],
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      faqData[index]['answer']!,
+                      style: TextStyle(color: theme.hintColor, height: 1.5),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },

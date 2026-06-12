@@ -76,7 +76,7 @@ class RequestModel {
 
   DateTime createdAt;
   DateTime? processedAt;
-
+  String? userId;
   RequestModel({
     this.id,
     required this.title,
@@ -90,6 +90,7 @@ class RequestModel {
     this.evidenceFileUrl,
     DateTime? createdAt,
     this.processedAt,
+    this.userId,
   }) : createdAt = createdAt ?? DateTime.now();
 
   /// ================== TO MAP ==================
@@ -133,29 +134,31 @@ class RequestModel {
     } else {
       status = RequestStatus.pending;
     }
-
+    // Trong fromMap, thêm trước return:
+    print("DEBUG imageUrl: ${map['imageUrl']}");
+    print("DEBUG evidenceFileUrl: ${map['evidenceFileUrl']}");
+    print("DEBUG all keys: ${map.keys.toList()}");
     return RequestModel(
       id: map['id'],
       title: map['title'] ?? '',
-      content:
-          map['thrilled'] ??
-          map['content'] ??
-          '', // Xử lý cả field "thrilled" và "content"
+      content: map['thrilled'] ?? map['content'] ?? '',
       studentName: map['studentName'] ?? '',
-      studentId:
-          map['studentMssv'] ??
-          map['studentId'] ??
-          '', // Xử lý cả field "studentMssv" và "studentId"
+      studentId: map['studentMssv'] ?? map['studentId'] ?? '',
       status: status,
-      // Xử lý tương tự cho type nếu cần
       type: (map['type'] is int)
           ? RequestType.values[map['type']]
           : RequestType.confirm,
       adminNote: map['adminNote'],
       processedBy: map['processedBy'],
+      evidenceFileUrl: map['imageUrl'] ?? map['evidenceFileUrl'],
       createdAt: map['createdAt'] != null
           ? DateTime.parse(map['createdAt'])
           : DateTime.now(),
+      processedAt:
+          map['processedAt'] !=
+              null // ← THÊM ĐOẠN NÀY
+          ? DateTime.parse(map['processedAt'])
+          : null,
     );
   }
 }

@@ -310,7 +310,8 @@ class FirestoreRequestRepository {
     type: RequestType.values[data['type'] is int ? data['type'] : 0],
     adminNote: data['adminNote'],
     processedBy: data['processedBy'],
-    evidenceFileUrl: data['evidenceFileUrl'],
+    userId: data['userId'], 
+    evidenceFileUrl: data['imageUrl'] ?? data['evidenceFileUrl'],
     createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     processedAt: (data['processedAt'] as Timestamp?)?.toDate(),
   );
